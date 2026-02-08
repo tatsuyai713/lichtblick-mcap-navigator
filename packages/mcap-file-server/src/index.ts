@@ -1,6 +1,6 @@
 import cors from "cors";
 import express from "express";
-import { createReadStream } from "fs";
+import { createReadStream, existsSync } from "fs";
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -9,8 +9,14 @@ const app = express();
 app.use(cors());
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const defaultRoot = path.resolve(__dirname, "..", "..", "..", "mcap-data");
-const rootDir = path.resolve(process.env.MCAP_ROOT ?? defaultRoot);
+const repoRoot = path.resolve(__dirname, "..", "..", "..");
+const parentRoot = path.resolve(repoRoot, "..");
+const envRoot = process.env.MCAP_ROOT ? path.resolve(process.env.MCAP_ROOT) : undefined;
+const fallbackRoot =
+  [path.resolve(parentRoot, "mcap-data"), path.resolve(repoRoot, "mcap-data")].find((candidate) =>
+    existsSync(candidate),
+  ) ?? path.resolve(repoRoot, "mcap-data");
+const rootDir = path.resolve(envRoot ?? fallbackRoot);
 const port = Number(process.env.PORT ?? 3100);
 
 function toPosixPath(inputPath: string) {
