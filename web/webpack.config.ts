@@ -23,5 +23,17 @@ const params: ConfigParams = {
   version: packageJson.version,
 };
 
+const devConfig = devServerConfig(params);
+devConfig.devServer = {
+  ...devConfig.devServer,
+  proxy: [
+    {
+      context: ["/api"],
+      target: "http://localhost:3100",
+      changeOrigin: true,
+    },
+  ],
+};
+
 // foxglove-depcheck-used: webpack-dev-server
-export default [devServerConfig(params), mainConfig(params)];
+export default [devConfig, mainConfig(params)];

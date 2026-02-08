@@ -154,6 +154,12 @@ export function CompatibilityBanner({
   currentVersion: number;
   isDismissable: boolean;
 }): React.JSX.Element | ReactNull {
+  if (
+    (window as typeof window & { __LICHTBLICK_DISABLE_COMPAT_BANNER__?: boolean })
+      .__LICHTBLICK_DISABLE_COMPAT_BANNER__ === true
+  ) {
+    return ReactNull;
+  }
   const { classes } = useStyles();
   const muiTheme = createMuiTheme("dark");
   const [showBanner, setShowBanner] = useState(true);

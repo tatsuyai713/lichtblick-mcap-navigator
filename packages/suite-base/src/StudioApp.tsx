@@ -47,7 +47,15 @@ function contextMenuHandler(event: MouseEvent) {
   return false;
 }
 
-export function StudioApp(): React.JSX.Element {
+export type StudioAppShellProps = {
+  children: React.JSX.Element;
+};
+
+export type StudioAppProps = {
+  Shell?: (props: StudioAppShellProps) => React.JSX.Element;
+};
+
+export function StudioApp({ Shell }: StudioAppProps = {}): React.JSX.Element {
   const {
     dataSources,
     extensionLoaders,
@@ -121,30 +129,35 @@ export function StudioApp(): React.JSX.Element {
     };
   }, []);
 
+  const workspaceNode = (
+    <DndProvider backend={HTML5Backend}>
+      <Suspense fallback={<></>}>
+        <PanelCatalogProvider>
+          <Workspace
+            deepLinks={deepLinks}
+            appBarLeftInset={appBarLeftInset}
+            onAppBarDoubleClick={onAppBarDoubleClick}
+            showCustomWindowControls={customWindowControlProps?.showCustomWindowControls}
+            isMaximized={customWindowControlProps?.isMaximized}
+            initialZoomFactor={customWindowControlProps?.initialZoomFactor}
+            onMinimizeWindow={customWindowControlProps?.onMinimizeWindow}
+            onMaximizeWindow={customWindowControlProps?.onMaximizeWindow}
+            onUnmaximizeWindow={customWindowControlProps?.onUnmaximizeWindow}
+            onCloseWindow={customWindowControlProps?.onCloseWindow}
+            AppBarComponent={AppBarComponent}
+            Shell={Shell}
+          />
+        </PanelCatalogProvider>
+      </Suspense>
+    </DndProvider>
+  );
+
   return (
     <MaybeLaunchPreference>
       <MultiProvider providers={providers}>
         <DocumentTitleAdapter />
         <SendNotificationToastAdapter />
-        <DndProvider backend={HTML5Backend}>
-          <Suspense fallback={<></>}>
-            <PanelCatalogProvider>
-              <Workspace
-                deepLinks={deepLinks}
-                appBarLeftInset={appBarLeftInset}
-                onAppBarDoubleClick={onAppBarDoubleClick}
-                showCustomWindowControls={customWindowControlProps?.showCustomWindowControls}
-                isMaximized={customWindowControlProps?.isMaximized}
-                initialZoomFactor={customWindowControlProps?.initialZoomFactor}
-                onMinimizeWindow={customWindowControlProps?.onMinimizeWindow}
-                onMaximizeWindow={customWindowControlProps?.onMaximizeWindow}
-                onUnmaximizeWindow={customWindowControlProps?.onUnmaximizeWindow}
-                onCloseWindow={customWindowControlProps?.onCloseWindow}
-                AppBarComponent={AppBarComponent}
-              />
-            </PanelCatalogProvider>
-          </Suspense>
-        </DndProvider>
+        {workspaceNode}
       </MultiProvider>
     </MaybeLaunchPreference>
   );

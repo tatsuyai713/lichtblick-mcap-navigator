@@ -15,6 +15,7 @@ export type WorkspaceProps = CustomWindowControlsProps & {
 
   disablePersistenceForStorybook?: boolean;
   AppBarComponent?: (props: AppBarProps) => React.JSX.Element;
+  Shell?: (props: { children: React.JSX.Element }) => React.JSX.Element;
 };
 
 export type DropHandler = {

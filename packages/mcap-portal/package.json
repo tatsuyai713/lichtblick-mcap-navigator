@@ -1,0 +1,13 @@
+{
+  "name": "@lichtblick/mcap-portal",
+  "license": "MPL-2.0",
+  "private": true,
+  "main": "./src/index.tsx",
+  "dependencies": {
+    "@lichtblick/suite-base": "workspace:*"
+  },
+  "devDependencies": {
+    "@mui/material": "7.2.0",
+    "tss-react": "4.9.19"
+  }
+}

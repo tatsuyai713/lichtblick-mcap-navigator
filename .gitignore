@@ -30,3 +30,8 @@ test-results/*
 .sonar_lock
 .scannerwork
 eslint-report.json
+.dev-logs/
+
+# MCAP
+mcap-data
+*.mcap

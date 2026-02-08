@@ -30,7 +30,6 @@ import {
 } from "@lichtblick/suite-base/components/DataSourceDialog";
 import DataSourceSidebar from "@lichtblick/suite-base/components/DataSourceSidebar/DataSourceSidebar";
 import DocumentDropListener from "@lichtblick/suite-base/components/DocumentDropListener";
-import { EventsList } from "@lichtblick/suite-base/components/EventsList";
 import ExtensionsSettings from "@lichtblick/suite-base/components/ExtensionsSettings";
 import KeyListener from "@lichtblick/suite-base/components/KeyListener";
 import LayoutBrowser from "@lichtblick/suite-base/components/LayoutBrowser";
@@ -50,7 +49,6 @@ import { SidebarItem } from "@lichtblick/suite-base/components/Sidebars/types";
 import Stack from "@lichtblick/suite-base/components/Stack";
 import {
   StudioLogsSettings,
-  StudioLogsSettingsSidebar,
 } from "@lichtblick/suite-base/components/StudioLogsSettings";
 import { SyncAdapters } from "@lichtblick/suite-base/components/SyncAdapters";
 import { TopicList } from "@lichtblick/suite-base/components/TopicList";
@@ -62,10 +60,7 @@ import {
   LayoutState,
   useCurrentLayoutSelector,
 } from "@lichtblick/suite-base/context/CurrentLayoutContext";
-import {
-  useCurrentUser,
-  useCurrentUserType,
-} from "@lichtblick/suite-base/context/CurrentUserContext";
+import { useCurrentUser } from "@lichtblick/suite-base/context/CurrentUserContext";
 import { EventsStore, useEvents } from "@lichtblick/suite-base/context/EventsContext";
 import { usePlayerSelection } from "@lichtblick/suite-base/context/PlayerSelectionContext";
 import {
@@ -119,7 +114,6 @@ const selectPlay = (ctx: MessagePipelineContext) => ctx.startPlayback;
 const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
 const selectPlayUntil = (ctx: MessagePipelineContext) => ctx.playUntil;
 const selectPlayerId = (ctx: MessagePipelineContext) => ctx.playerState.playerId;
-const selectEventsSupported = (store: EventsStore) => store.eventsSupported;
 const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
 const selectWorkspaceDataSourceDialog = (store: WorkspaceContextStore) => store.dialogs.dataSource;
@@ -131,7 +125,6 @@ const selectWorkspaceRightSidebarOpen = (store: WorkspaceContextStore) => store.
 const selectWorkspaceRightSidebarSize = (store: WorkspaceContextStore) => store.sidebars.right.size;
 
 function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
-  const { PerformanceSidebarComponent } = useAppContext();
   const { classes } = useStyles();
   const containerRef = useRef<HTMLDivElement>(ReactNull);
   const { availableSources, selectSource } = usePlayerSelection();
@@ -187,21 +180,13 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
   // see comment below above the RemountOnValueChange component
   const playerId = useMessagePipeline(selectPlayerId);
 
-  const currentUserType = useCurrentUserType();
-
   useDefaultWebLaunchPreference();
 
   useStructureItemsStoreManager();
 
-  const [enableDebugMode = false] = useAppConfigurationValue<boolean>(AppSetting.SHOW_DEBUG_PANELS);
-
   const { currentUser, signIn } = useCurrentUser();
 
   const supportsAccountSettings = signIn != undefined;
-
-  const [enableStudioLogsSidebar = false] = useAppConfigurationValue<boolean>(
-    AppSetting.SHOW_DEBUG_PANELS,
-  );
 
   // Since we can't toggle the title bar on an electron window, keep the setting at its initial
   // value until the app is reloaded/relaunched.
@@ -330,14 +315,6 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
         component: ExtensionsSidebar,
       });
     }
-    if (enableStudioLogsSidebar) {
-      topItems.set("logs-settings", {
-        iconName: "BacklogList",
-        title: "Studio logs settings",
-        component: StudioLogsSettingsSidebar,
-      });
-    }
-
     const bottomItems = new Map<SidebarItemKey, SidebarItem>([]);
 
     if (!enableNewTopNav) {
@@ -366,15 +343,11 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
     DataSourceSidebarItem,
     playerAlerts,
     enableNewTopNav,
-    enableStudioLogsSidebar,
     AppContextLayoutBrowser,
     supportsAccountSettings,
     currentUser,
     appContextSidebarItems,
   ]);
-
-  const eventsSupported = useEvents(selectEventsSupported);
-  const showEventsTab = currentUserType !== "unauthenticated" && eventsSupported;
 
   const leftSidebarItems = useMemo(() => {
     const items = new Map<LeftSidebarItemKey, SidebarItem>([
@@ -395,9 +368,10 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
         },
       ],
       ["layouts", { title: "Layouts", component: LayoutBrowser }],
+      ["extensions", { title: "Extensions", component: ExtensionsSidebar }],
     ]);
     return items;
-  }, [PanelSettingsSidebar, playerAlerts]);
+  }, [ExtensionsSidebar, PanelSettingsSidebar, playerAlerts]);
 
   const rightSidebarItems = useMemo(() => {
     const items = new Map<RightSidebarItemKey, SidebarItem>([
@@ -408,27 +382,16 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
           component: VariablesList,
         },
       ],
+      [
+        "logs-settings",
+        {
+          title: t("workspace:studioLogs"),
+          component: StudioLogsSettings,
+        },
+      ],
     ]);
-    if (enableDebugMode) {
-      if (PerformanceSidebarComponent) {
-        items.set("performance", {
-          title: t("workspace:performance"),
-          component: PerformanceSidebarComponent,
-        });
-      }
-      items.set("logs-settings", {
-        title: t("workspace:studioLogs"),
-        component: StudioLogsSettings,
-      });
-    }
-    if (showEventsTab) {
-      items.set("events", {
-        title: t("workspace:events"),
-        component: EventsList,
-      });
-    }
     return items;
-  }, [enableDebugMode, showEventsTab, PerformanceSidebarComponent]);
+  }, []);
 
   const keyboardEventHasModifier = (event: KeyboardEvent) =>
     navigator.userAgent.includes("Mac") ? event.metaKey : event.ctrlKey;
@@ -574,12 +537,8 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
     playUntil,
   });
 
-  return (
-    <PanelStateContextProvider>
-      {dataSourceDialog.open && <DataSourceDialog />}
-      <DocumentDropListener onDrop={dropHandler} allowedExtensions={allowedDropExtensions} />
-      <SyncAdapters />
-      <KeyListener global keyDownHandlers={keyDownHandlers} />
+  const workspaceBody = (
+    <>
       <div className={classes.container} ref={containerRef} tabIndex={0}>
         {appBar}
         <Sidebars
@@ -618,6 +577,18 @@ function WorkspaceContent(props: WorkspaceProps): React.JSX.Element {
           </div>
         )}
       </div>
+    </>
+  );
+
+  const content = props.Shell ? <props.Shell>{workspaceBody}</props.Shell> : workspaceBody;
+
+  return (
+    <PanelStateContextProvider>
+      {dataSourceDialog.open && <DataSourceDialog />}
+      <DocumentDropListener onDrop={dropHandler} allowedExtensions={allowedDropExtensions} />
+      <SyncAdapters />
+      <KeyListener global keyDownHandlers={keyDownHandlers} />
+      {content}
       <WorkspaceDialogs />
     </PanelStateContextProvider>
   );
