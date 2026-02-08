@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { makeStyles } from "tss-react/mui";
 
+import { AddPanelMenu } from "@lichtblick/suite-base/components/AppBar/AddPanelMenu";
 import { BuiltinIcon } from "@lichtblick/suite-base/components/BuiltinIcon";
 import { usePlayerSelection } from "@lichtblick/suite-base/context/PlayerSelectionContext";
 import { useWorkspaceActions } from "@lichtblick/suite-base/context/Workspace/useWorkspaceActions";
@@ -194,9 +195,11 @@ export function McapPortalShell({ children }: Props) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set([""]));
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [addPanelAnchorEl, setAddPanelAnchorEl] = useState<HTMLElement | null>(null);
   const lastSelectionRef = useRef<string>("");
 
   const selectedPaths = useMemo(() => Array.from(selected).sort(), [selected]);
+  const addPanelOpen = Boolean(addPanelAnchorEl);
   const resolveMcapPath = (path: string) => {
     const marker = ".mcap.";
     const index = path.toLowerCase().indexOf(marker);
@@ -341,6 +344,20 @@ export function McapPortalShell({ children }: Props) {
           <div className={classes.toolsRow}>
             <button
               className={classes.toolButton}
+              onClick={(event) => {
+                setAddPanelAnchorEl(event.currentTarget);
+              }}
+              type="button"
+              id="add-panel-button"
+              aria-label="Add panel"
+              title="Add panel"
+            >
+              <span className={classes.toolIcon}>
+                <BuiltinIcon name="RectangularClipping" />
+              </span>
+            </button>
+            <button
+              className={classes.toolButton}
               onClick={() => sidebarActions.left.selectItem("panel-settings")}
               type="button"
               aria-label="Panel settings"
@@ -463,6 +480,13 @@ export function McapPortalShell({ children }: Props) {
           <div className={classes.workspaceBody}>{children}</div>
         </div>
       </main>
+      <AddPanelMenu
+        anchorEl={addPanelAnchorEl ?? undefined}
+        open={addPanelOpen}
+        handleClose={() => {
+          setAddPanelAnchorEl(null);
+        }}
+      />
     </div>
   );
 }
